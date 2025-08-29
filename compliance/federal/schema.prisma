@@ -1,0 +1,131 @@
+// --- Prisma Client (new provider) ---
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/federal"
+}
+
+// --- Dedicated datasource (separate DB or schema) ---
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- Enums (scoped to this package for isolation) ---
+enum Category {
+  EMPLOYMENT
+  SAFETY
+  TAX
+  LICENSING
+  ACCESSIBILITY
+  ENVIRONMENT
+  PRIVACY
+  OTHER
+}
+
+enum Severity {
+  REQUIRED
+  RECOMMENDED
+}
+
+enum RuleStatus {
+  DRAFT
+  ACTIVE
+  DEPRECATED
+}
+
+enum SourceKind {
+  HTML
+  PDF
+  API
+  CSV
+  GIS
+  OTHER
+}
+
+// --- Core models (no external relations) ---
+model FederalAgency {
+  id          Int               @id @default(autoincrement())
+  name        String
+  acronym     String?
+  website     String?
+  slug        String?
+  sources     FederalSource[]
+  obligations FederalObligation[]
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@unique([name, acronym])
+  @@index([slug])
+}
+
+model FederalSource {
+  id        Int                 @id @default(autoincrement())
+  agencyId  Int?
+  agency    FederalAgency?      @relation(fields: [agencyId], references: [id], onDelete: SetNull)
+  title     String
+  url       String
+  kind      SourceKind          @default(OTHER)
+  tags      String[]            @default([])
+  lastSeen  DateTime?
+  etag      String?
+  hash      String?
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+
+  // back-relations
+  citations FederalRuleCitation[]
+
+  @@unique([url])
+  @@index([agencyId, lastSeen])
+}
+
+model FederalObligation {
+  id          Int               @id @default(autoincrement())
+  code        String            @unique            // e.g., OBL_I9
+  title       String
+  description String?
+  category    Category
+  severity    Severity          @default(REQUIRED)
+  agencyId    Int?
+  agency      FederalAgency?    @relation(fields: [agencyId], references: [id], onDelete: SetNull)
+  rules       FederalRule[]
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@index([category])
+  @@index([agencyId])
+}
+
+model FederalRule {
+  id            Int                @id @default(autoincrement())
+  obligationId  Int
+  obligation    FederalObligation  @relation(fields: [obligationId], references: [id], onDelete: Cascade)
+  status        RuleStatus         @default(ACTIVE)
+  effectiveFrom DateTime
+  effectiveTo   DateTime?
+  predicate     Json               // {"all":[{"fact":"has_employees","op":"==","value":true}]}
+  output        Json?              // retention/forms/deadlines/etc.
+  triggers      String[]           @default([])   // for prefiltering
+  priority      Int                @default(100)
+  notes         String?
+  citations     FederalRuleCitation[]
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  @@index([status, effectiveFrom])
+  @@index([priority])
+  @@index([effectiveFrom, effectiveTo])
+}
+
+model FederalRuleCitation {
+  id        Int            @id @default(autoincrement())
+  ruleId    Int
+  rule      FederalRule    @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  sourceId  Int?
+  source    FederalSource? @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+  quote     String?
+  createdAt DateTime       @default(now())
+
+  @@index([ruleId])
+  @@index([sourceId])
+}
