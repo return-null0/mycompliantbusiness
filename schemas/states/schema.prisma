@@ -1,7 +1,7 @@
 // --- Prisma Client (new provider) ---
 generator client {
   provider = "prisma-client"
-  output   = "../generated/states"
+  output   = "../../generated/states"
 }
 
 // --- Dedicated datasource (separate DB or schema) ---

@@ -1,0 +1,35 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client"
+  output   = "../../generated/sessions" // adjust to your repo layout
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Session {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  // Sliding expiration: bump this on each request (see Express middleware)
+  expiresAt  DateTime
+
+  // Example per-session data relation
+  items      Item[]
+
+  @@index([expiresAt])
+}
+
+model Item {
+  id        String   @id @default(cuid())
+  sessionId String
+  createdAt DateTime @default(now())
+  title     String
+  data      Json
+
+  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+}

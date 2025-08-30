@@ -1,7 +1,7 @@
 // --- Prisma Client (new provider) ---
 generator client {
   provider = "prisma-client"
-  output   = "../generated/federal"
+  output   = "../../generated/federal"
 }
 
 // --- Dedicated datasource (separate DB or schema) ---
