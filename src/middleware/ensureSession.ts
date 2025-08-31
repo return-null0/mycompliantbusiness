@@ -1,6 +1,6 @@
 // middleware/ensureSession.ts
 import { NextFunction, Request, Response } from "express";
-import {sessionPrisma} from "../schemas/sessions/sessionPrisma";
+import {sessionPrisma} from "../sessionPrismaClient.js";
 
 // lib/session.ts
 export const SESSION_COOKIE = "sid";

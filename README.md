@@ -45,3 +45,9 @@ Goal: ingest US federal, state, and city obligations, evaluate them against busi
 	•	Federal: I-9, FLSA, OSHA 1904 (≥10), ADA (Title I ≥15 / Title III customer-facing), IRS basics.
 	•	States: unemployment (UI/SUTA), income tax withholding, sales tax vendor, food permits, portal links.
 	•	Cities: business license/tax certificate, local food permit, fire/sign permits.
+
+
+
+### 
+NOTE: remember prisma migrate to apply the postgres table definitions from prisma
+into a postgres server (preferably dockerized)

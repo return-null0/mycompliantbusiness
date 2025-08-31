@@ -1,0 +1,37 @@
+{
+  "compilerOptions": {
+    /* Language & Environment */
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+
+    /* Types */
+    "types": ["node", "express", "cookie-parser"],
+
+    /* Strictness */
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "forceConsistentCasingInFileNames": true,
+
+    /* Project layout (all your TS lives in src/, JS goes to dist/) */
+    "rootDir": "src",
+    "outDir": "dist",
+
+    /* Performance */
+    "skipLibCheck": true,
+    "incremental": true,
+
+    /* Pick up your Request augmentation (put it under src/types) */
+    "typeRoots": ["./src/types", "./node_modules/@types"],
+
+    /* Debugging */
+    "sourceMap": true
+  },
+  "include": ["src/**/*.ts", "src/**/*.js", "src/**/*.d.ts"],
+  "exclude": ["node_modules", "dist", "generated", "frontend", "prisma"]
+}

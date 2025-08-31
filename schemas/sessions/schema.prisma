@@ -1,6 +1,6 @@
 // prisma/schema.prisma
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "../../generated/sessions" // adjust to your repo layout
 }
 
