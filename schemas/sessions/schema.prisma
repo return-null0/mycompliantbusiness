@@ -1,35 +1,65 @@
-// prisma/schema.prisma
+// schemas/sessions/schema.prisma
 generator client {
   provider = "prisma-client-js"
-  output   = "../../generated/sessions" // adjust to your repo layout
+  output   = "../../generated/sessions"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = env("SESSIONS_DATABASE_URL")
 }
 
-model Session {
-  id         String   @id @default(cuid())
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  // Sliding expiration: bump this on each request (see Express middleware)
-  expiresAt  DateTime
+/* Mirror enums needed here (no cross-DB enum sharing) */
+enum Scope {
+  FEDERAL
+  STATE
+  CITY
+}
 
-  // Example per-session data relation
-  items      Item[]
+/* Sessions that own answers */
+model Session {
+  id        String   @id @default(cuid())
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  answers   Answer[]
 
   @@index([expiresAt])
 }
 
-model Item {
-  id        String   @id @default(cuid())
-  sessionId String
-  createdAt DateTime @default(now())
-  title     String
-  data      Json
+/**
+ * A single answer to a specific question within a session.
+ * NOTE: We can’t FK to common.Question across databases; we store identifiers:
+ *  - scope, questionId, questionCode (and optional topicId for convenience)
+ */
+model Answer {
+  id           Int      @id @default(autoincrement())
 
-  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sessionId    String
+  session      Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
+  scope        Scope              // FEDERAL/STATE/CITY (mirrors common enum)
+  questionId   Int                // id from common.Question
+  questionCode String             // code from common.Question
+  topicId      Int?               // optional: from common.Topic if helpful
+
+  // User-provided value (store as JSON + typed projections for filtering)
+  value        Json
+  valueNumber  Float?
+  valueBool    Boolean?
+  valueText    String?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Prevent duplicates within a session for the same question
+  @@unique([sessionId, questionCode])
+
+  // Indexes for common lookups
   @@index([sessionId])
+  @@index([scope, questionId])
+  @@index([valueNumber])
+  @@index([valueBool])
+  @@index([valueText])
 }

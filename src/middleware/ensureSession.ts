@@ -1,29 +1,15 @@
-// middleware/ensureSession.ts
-import { NextFunction, Request, Response } from "express";
-import {sessionPrisma} from "../sessionPrismaClient.js";
-
-// lib/session.ts
-export const SESSION_COOKIE = "sid";
-export const SESSION_TTL_DAYS = 180;
-
-export function expiryDate(days: number): Date {
-  return new Date(Date.now() + days * 24 * 60 * 60 * 1000);
-}
-export function expiryMs(days: number): number {
-  return days * 24 * 60 * 60 * 1000;
-}
+import type { Request, Response, NextFunction } from "express";
+import sessionPrisma from "../sessionPrismaClient.js"; // <-- NOT from generated/
+import { COOKIE_NAME, SESSION_TTL_DAYS, expiryDate, ttlMs } from "../sessionConstants.js";
 
 export async function ensureSession(req: Request, res: Response, next: NextFunction) {
   try {
-    const sid = req.cookies?.[SESSION_COOKIE] as string | undefined;
+    const sid = typeof req.cookies?.[COOKIE_NAME] === "string" ? (req.cookies[COOKIE_NAME] as string) : undefined;
 
     if (sid) {
       const s = await sessionPrisma.session.findUnique({ where: { id: sid } });
       if (s) {
-        await sessionPrisma.session.update({
-          where: { id: s.id },
-          data: { expiresAt: expiryDate(SESSION_TTL_DAYS) },
-        });
+        await sessionPrisma.session.update({ where: { id: s.id }, data: { expiresAt: expiryDate(SESSION_TTL_DAYS) } });
         req.sessionId = s.id;
         return next();
       }
@@ -34,15 +20,17 @@ export async function ensureSession(req: Request, res: Response, next: NextFunct
       select: { id: true },
     });
 
-    res.cookie(SESSION_COOKIE, created.id, {
+    res.cookie(COOKIE_NAME, created.id, {
       httpOnly: true,
       sameSite: "lax",
-      maxAge: expiryMs(SESSION_TTL_DAYS),
+      maxAge: ttlMs(SESSION_TTL_DAYS),
+      secure: false, // true in prod over HTTPS
+      path: "/",
     });
 
     req.sessionId = created.id;
-    next();
+    return next();
   } catch (err) {
-    next(err);
+    return next(err);
   }
 }

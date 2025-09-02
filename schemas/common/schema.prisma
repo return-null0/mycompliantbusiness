@@ -1,26 +1,19 @@
+// schemas/common/schema.prisma
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "../../generated/common"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = env("COMMON_DATABASE_URL")
 }
 
-/* Enums (DB-level; Prisma generates TS string unions) */
+/* --- Enums (kept minimal) --- */
 enum Scope {
   FEDERAL
   STATE
   CITY
-}
-
-enum QuestionKind {
-  BOOL
-  NUMBER
-  TEXT
-  SELECT
-  MULTI
 }
 
 enum Category {
@@ -45,82 +38,53 @@ enum RuleStatus {
   DEPRECATED
 }
 
-/* Topic is the glue: (scope, number[, stateCode, cityName]) */
-model Topic {
-  id        Int      @id @default(autoincrement())
+enum QuestionKind {
+  NUMBER
+  BOOL
+  TEXT
+}
+
+
+/* --- Minimal Question --- */
+model Question {
+  id        Int           @id @default(autoincrement())
   scope     Scope
-  number    Int
-  title     String?
+  code      String        // stable key used by sessions DB
+  kind      QuestionKind
+  prompt    String
 
-  // jurisdiction (nullable for FEDERAL)
-  stateCode String?
-  cityName  String?
 
-  questions   Question[]
-  obligations Obligation[]
-  rules       Rule[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([scope, number, stateCode, cityName])
-  @@index([scope, stateCode, cityName])
+  @@unique([scope, code])
 }
 
-/* Shown to user; belongs to a Topic = same number & scope */
-model Question {
-  id        Int          @id @default(autoincrement())
-  topicId   Int
-  topic     Topic        @relation(fields: [topicId], references: [id], onDelete: Cascade)
+/* --- Minimal Obligation --- */
+model Obligation {
+  id          Int      @id @default(autoincrement())
+  scope       Scope
+  code        String   // stable key used by sessions DB
+  title       String
+  category    Category
+  severity    Severity @default(REQUIRED)
+  citation    String?  // leave optional for simpler seeds
+  description String?
 
-  scope     Scope
-  kind      QuestionKind
-  code      String
-  prompt    String
-  help      String?
-  options   String?      // JSON string for SELECT/MULTI options
-  active    Boolean      @default(true)
-  weight    Int          @default(0)
-  tags      String[]     @default([])
 
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  rules Rule[]
 
   @@unique([scope, code])
-  @@index([topicId])
 }
 
-/* Obligation: what may apply after answering; same Topic */
-model Obligation {
-  id          Int        @id @default(autoincrement())
-  topicId     Int
-  topic       Topic      @relation(fields: [topicId], references: [id], onDelete: Cascade)
-
-  scope       Scope
-  code        String
-  title       String
-  description String?
-  category    Category
-  severity    Severity   @default(REQUIRED)
-  tags        String[]   @default([])
-    rules       Rule[]
-  // jurisdiction (nullable for FEDERAL)
-  stateCode   String?
-  cityName    String?
-
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-
-  @@unique([scope, code, stateCode, cityName])
-  @@index([topicId])
-}
-
-/* Rule: decides if an obligation under the same Topic applies */
+/* --- Minimal Rule --- */
+/* Bind a predicate to an obligation (no topic linkage needed). */
 model Rule {
   id            Int        @id @default(autoincrement())
-  topicId       Int
-  topic         Topic      @relation(fields: [topicId], references: [id], onDelete: Cascade)
-
   scope         Scope
   obligationId  Int
   obligation    Obligation @relation(fields: [obligationId], references: [id], onDelete: Cascade)
@@ -128,32 +92,11 @@ model Rule {
   status        RuleStatus @default(ACTIVE)
   effectiveFrom DateTime
   effectiveTo   DateTime?
-  predicate     Json       // JSON-encoded Predicate (typed in TS)
-  output        Json?
-  triggers      String[]   @default([])
-  priority      Int        @default(100)
-  notes         String?
-
-  // jurisdiction (nullable for FEDERAL)
-  stateCode     String?
-  cityName      String?
+  predicate     Json       // tiny DSL evaluated in server
 
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
 
-  @@index([topicId])
   @@index([scope, status, effectiveFrom])
-}
-
-/* Optional: store answers by session */
-model AnswerAudit {
-  id           String   @id @default(cuid())
-  sessionId    String
-  scope        Scope
-  topicNumber  Int
-  questionCode String
-  valueJson    String   // serialized AnswerValue
-  createdAt    DateTime @default(now())
-
-  @@index([sessionId, scope, topicNumber])
+  @@index([obligationId])
 }
