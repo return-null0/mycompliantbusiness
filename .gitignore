@@ -3,4 +3,3 @@ packagejsonnotes.js
 node_modules
 dist
 .env
-generated/

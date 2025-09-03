@@ -1,0 +1,68 @@
+// schemas/sessions/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../generated/sessions"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("SESSIONS_DATABASE_URL")
+}
+
+/**
+ * Mirror enums needed here (no cross-DB enum sharing)
+ */
+enum Scope {
+  FEDERAL
+  STATE
+  CITY
+}
+
+/**
+ * Sessions that own answers
+ */
+model Session {
+  id        String   @id @default(cuid())
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  answers Answer[]
+
+  @@index([expiresAt])
+}
+
+/**
+ * A single answer to a specific question within a session.
+ * NOTE: We can’t FK to common.Question across databases; we store identifiers:
+ * - scope, questionId, questionCode (and optional topicId for convenience)
+ */
+model Answer {
+  id Int @id @default(autoincrement())
+
+  sessionId String
+  session   Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  scope        Scope // FEDERAL/STATE/CITY (mirrors common enum)
+  questionId   Int // id from common.Question
+  questionCode String // code from common.Question
+  topicId      Int? // optional: from common.Topic if helpful
+
+  // User-provided value (store as JSON + typed projections for filtering)
+  value       Json
+  valueNumber Float?
+  valueBool   Boolean?
+  valueText   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Prevent duplicates within a session for the same question
+  @@unique([sessionId, questionCode])
+  // Indexes for common lookups
+  @@index([sessionId])
+  @@index([scope, questionId])
+  @@index([valueNumber])
+  @@index([valueBool])
+  @@index([valueText])
+}

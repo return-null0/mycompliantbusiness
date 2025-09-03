@@ -1,0 +1,109 @@
+// schemas/common/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../generated/common"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("COMMON_DATABASE_URL")
+}
+
+/**
+ * --- Enums (kept minimal) ---
+ */
+enum Scope {
+  FEDERAL
+  STATE
+  CITY
+}
+
+enum Category {
+  EMPLOYMENT
+  SAFETY
+  TAX
+  LICENSING
+  ACCESSIBILITY
+  ENVIRONMENT
+  PRIVACY
+  OTHER
+}
+
+enum Severity {
+  REQUIRED
+  RECOMMENDED
+}
+
+enum RuleStatus {
+  DRAFT
+  ACTIVE
+  DEPRECATED
+}
+
+enum QuestionKind {
+  NUMBER
+  BOOL
+  TEXT
+}
+
+/**
+ * --------- Models with nullable location ---------
+ */
+/**
+ * NOTE: Uniqueness now includes (scope, location, code)
+ * so you can reuse the same code across different states/cities.
+ */
+
+model Question {
+  id       Int          @id @default(autoincrement())
+  scope    Scope
+  location String? // NULL for federal; "NY" for New York; "NYC" for New York City, etc.
+  code     String // stable key used by sessions DB
+  kind     QuestionKind
+  prompt   String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([scope, location, code])
+  @@index([scope, location])
+}
+
+model Obligation {
+  id          Int      @id @default(autoincrement())
+  scope       Scope
+  location    String? // NULL for federal; 2-letter state or city slug for local
+  code        String // stable key used by sessions DB
+  title       String
+  category    Category
+  severity    Severity @default(REQUIRED)
+  citation    String?
+  description String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  rules Rule[]
+
+  @@unique([scope, location, code])
+  @@index([scope, location])
+}
+
+model Rule {
+  id           Int        @id @default(autoincrement())
+  scope        Scope
+  location     String? // match obligation/question location for quick AND-filtering
+  obligationId Int
+  obligation   Obligation @relation(fields: [obligationId], references: [id], onDelete: Cascade)
+
+  status        RuleStatus @default(ACTIVE)
+  effectiveFrom DateTime
+  effectiveTo   DateTime?
+  predicate     Json
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([scope, location, status, effectiveFrom])
+  @@index([obligationId])
+}
