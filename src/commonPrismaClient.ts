@@ -1,24 +1,18 @@
-import "dotenv/config";
 import { PrismaClient } from "../generated/common/index.js";
 
-const globalForPrisma = globalThis as unknown as { _commonPrisma?: PrismaClient };
-
-function buildUrl() {
-  const base = process.env.DATABASE_URL;
-  if (!base) {
-    throw new Error("Missing DATABASE_URL  in environment");
-  }
-  return `${base}${base.includes("?") ? "&" : "?"}schema=common`;
-}
+// Avoid multiple instances in dev (hot reload)
+const globalForPrisma = globalThis as unknown as {
+  commonPrisma?: PrismaClient;
+};
 
 export const commonPrisma =
-  globalForPrisma._commonPrisma ??
+  globalForPrisma.commonPrisma ??
   new PrismaClient({
-    datasources: { db: { url: buildUrl() } },
+    datasources: {
+      db: { url: process.env.COMMON_DATABASE_URL! },
+    },
   });
 
 if (process.env.NODE_ENV !== "production") {
-  globalForPrisma._commonPrisma = commonPrisma;
+  globalForPrisma.commonPrisma = commonPrisma;
 }
-
-export default commonPrisma;

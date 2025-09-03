@@ -42,9 +42,17 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   res.status(500).json({ error: "Internal Server Error" });
 });
 
-const port = Number(process.env.PORT) || 3000;
-app.listen(port, () => {
-  console.log(`Server http://localhost:${port}`);
-  console.log(`Try: curl "http://localhost:${port}/api/health"`);
-  console.log(`Try: curl "http://localhost:${port}/api/questions?scope=FEDERAL"`);
+const PORT = Number(process.env.PORT) || 8080;          // use Railway's PORT
+const HOST = "0.0.0.0";                                  // bind to all interfaces
+
+app.listen(PORT, HOST, () => {
+  console.log(`Server http://${HOST}:${PORT}`);
+  console.log(`Try: curl "http://127.0.0.1:${PORT}/api/health"`);
+  console.log(`Try: curl "http://127.0.0.1:${PORT}/api/questions?scope=FEDERAL"`);
+});
+
+// (optional) graceful shutdown (helps Railway stop cleanly)
+process.on("SIGTERM", () => {
+  console.log("Received SIGTERM, shutting down…");
+  process.exit(0);
 });
