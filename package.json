@@ -4,23 +4,18 @@
   "license": "MIT",
   "type": "module",
   "main": "dist/server.js",
-  "engines": {
-    "node": ">=18"
-  },
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && npm run build:fe",
     "start": "node --enable-source-maps dist/server.js",
-
+    "build:fe": "esbuild frontend/main.tsx --bundle --outfile=frontend/dist/app.js --format=esm --jsx=automatic --sourcemap",
+    "watch:fe": "esbuild frontend/main.tsx --bundle --outfile=frontend/dist/app.js --format=esm --jsx=automatic --sourcemap --watch",
     "prisma:gen:common": "prisma generate --schema schemas/common/schema.prisma",
     "prisma:gen:sessions": "prisma generate --schema schemas/sessions/schema.prisma",
     "prisma:gen": "npm run prisma:gen:common && npm run prisma:gen:sessions",
-
     "prisma:deploy:common": "prisma migrate deploy --schema schemas/common/schema.prisma",
     "prisma:deploy:sessions": "prisma migrate deploy --schema schemas/sessions/schema.prisma",
     "prisma:deploy": "npm run prisma:deploy:common && npm run prisma:deploy:sessions",
-
-    "prestart": "npm run prisma:deploy",
     "postinstall": "npm run prisma:gen"
   },
   "dependencies": {
