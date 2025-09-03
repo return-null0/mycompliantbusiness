@@ -3,18 +3,6 @@ import type { Request, Response, NextFunction } from "express";
 import sessionPrisma from "../sessionPrismaClient.js";
 import { COOKIE_NAME, SESSION_TTL_DAYS, expiryDate, ttlMs } from "../sessionConstants.js";
 
-const isProd = process.env.NODE_ENV === "production";
-const sameSiteEnv = (process.env.COOKIE_SAMESITE || "lax").toLowerCase();
-const sameSite: "lax" | "none" = sameSiteEnv === "none" ? "none" : "lax";
-
-function shouldBeSecure(req: Request) {
-  // honor proxy header if present
-  const xfProto = String(req.headers["x-forwarded-proto"] || "").split(",")[0].trim().toLowerCase();
-  const viaProxyHttps = xfProto === "https";
-  // In production, force secure (required for SameSite=None cookies to work reliably)
-  return isProd ? true : (req.secure || viaProxyHttps);
-}
-
 export async function ensureSession(req: Request, res: Response, next: NextFunction) {
   try {
     const sid = typeof req.cookies?.[COOKIE_NAME] === "string" ? (req.cookies[COOKIE_NAME] as string) : undefined;
@@ -26,16 +14,6 @@ export async function ensureSession(req: Request, res: Response, next: NextFunct
           where: { id: s.id },
           data: { expiresAt: expiryDate(SESSION_TTL_DAYS) },
         });
-
-        // refresh cookie on each hit (keeps Max-Age rolling)
-        res.cookie(COOKIE_NAME, s.id, {
-          httpOnly: true,
-          sameSite,
-          secure: sameSite === "none" ? true : shouldBeSecure(req),
-          maxAge: ttlMs(SESSION_TTL_DAYS),
-          path: "/",
-        });
-
         req.sessionId = s.id;
         return next();
       }
@@ -46,10 +24,15 @@ export async function ensureSession(req: Request, res: Response, next: NextFunct
       select: { id: true },
     });
 
+    const sameSiteHeader = (process.env.COOKIE_SAMESITE?.toLowerCase() === "none" ? "none" : "lax") as
+      | "lax"
+      | "strict"
+      | "none";
+
     res.cookie(COOKIE_NAME, created.id, {
       httpOnly: true,
-      sameSite,
-      secure: sameSite === "none" ? true : shouldBeSecure(req),
+      sameSite: sameSiteHeader,
+      secure: req.secure || req.headers["x-forwarded-proto"] === "https",
       maxAge: ttlMs(SESSION_TTL_DAYS),
       path: "/",
     });
