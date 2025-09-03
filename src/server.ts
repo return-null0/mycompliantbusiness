@@ -17,6 +17,7 @@ app.use("/static", express.static(path.join(process.cwd(), "frontend", "dist")))
 app.get("/", (_req, res) => {
   res.sendFile(path.join(process.cwd(), "frontend", "index.html"));
 });
+app.set("trust proxy", 1); // trust first proxy (Railway, Vercel, etc)
 app.use(express.json());
 app.use(cookieParser());
 app.use(ensureSession);
