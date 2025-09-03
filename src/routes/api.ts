@@ -4,6 +4,7 @@ import { commonPrisma } from "../commonPrismaClient.js";
 import { sessionPrisma } from "../sessionPrismaClient.js";
 import type { Scope } from "../../generated/common/index.js";
 import { asScope } from "../types/api.js";
+import { execSync } from "child_process";
 
 // If your middleware uses a cookie name, keep it consistent here.
 const COOKIE_NAME = process.env.SESSION_COOKIE_NAME ?? "sid";
@@ -351,6 +352,57 @@ api.get("/obligations", async (req, res, next) => {
     res.json({ sessionId, obligations: out });
   } catch (e) {
     next(e);
+  }
+});
+
+
+
+api.get("/debug", async (req, res) => {
+  try {
+    const envVars = {
+      COMMON_DATABASE_URL: process.env.COMMON_DATABASE_URL,
+      SESSIONS_DATABASE_URL: process.env.SESSIONS_DATABASE_URL,
+      NODE_ENV: process.env.NODE_ENV,
+    };
+
+    // Check DB connectivity for both clients
+    const [commonTables, sessionTables] = await Promise.all([
+      commonPrisma.$queryRawUnsafe<{ c: number }[]>(
+        `SELECT COUNT(*)::int AS c FROM information_schema.tables WHERE table_schema = current_schema()`
+      ),
+      sessionPrisma.$queryRawUnsafe<{ c: number }[]>(
+        `SELECT COUNT(*)::int AS c FROM information_schema.tables WHERE table_schema = current_schema()`
+      ),
+    ]);
+
+    // List migrations inside container
+    let migrations: Record<string, string[]> | { error: string };
+    try {
+      const commonFiles = execSync("ls -1 schemas/common/migrations", {
+        encoding: "utf-8",
+      })
+        .split("\n")
+        .filter(Boolean);
+      const sessionFiles = execSync("ls -1 schemas/sessions/migrations", {
+        encoding: "utf-8",
+      })
+        .split("\n")
+        .filter(Boolean);
+      migrations = { common: commonFiles, sessions: sessionFiles };
+    } catch {
+      migrations = { error: "Could not read migrations directories" };
+    }
+
+    res.json({
+      envVars,
+      dbCheck: {
+        commonTables: commonTables[0]?.c ?? 0,
+        sessionTables: sessionTables[0]?.c ?? 0,
+      },
+      migrations,
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message, stack: err.stack });
   }
 });
 

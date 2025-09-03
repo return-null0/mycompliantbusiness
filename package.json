@@ -9,9 +9,8 @@
   },
   "scripts": {
     "dev": "tsx watch src/server.ts",
-
-    "build:fe": "esbuild frontend/main.tsx --bundle --outfile=frontend/dist/app.js --format=esm --jsx=automatic --sourcemap",
-    "watch:fe": "esbuild frontend/main.tsx --bundle --outfile=frontend/dist/app.js --format=esm --jsx=automatic --sourcemap --watch",
+    "build": "tsc -p tsconfig.json",
+    "start": "node --enable-source-maps dist/server.js",
 
     "prisma:gen:common": "prisma generate --schema schemas/common/schema.prisma",
     "prisma:gen:sessions": "prisma generate --schema schemas/sessions/schema.prisma",
@@ -21,11 +20,7 @@
     "prisma:deploy:sessions": "prisma migrate deploy --schema schemas/sessions/schema.prisma",
     "prisma:deploy": "npm run prisma:deploy:common && npm run prisma:deploy:sessions",
 
-    "build": "npm run prisma:gen && npm run build:fe && tsc -p tsconfig.json",
-
     "prestart": "npm run prisma:deploy",
-    "start": "node --enable-source-maps dist/server.js",
-
     "postinstall": "npm run prisma:gen"
   },
   "dependencies": {
