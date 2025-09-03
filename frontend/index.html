@@ -4,14 +4,10 @@
     <meta charset="utf-8" />
     <title>My Compliant Business</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <!-- Prevent caches from serving old HTML -->
-    <meta http-equiv="cache-control" content="no-cache" />
-    <meta http-equiv="pragma" content="no-cache" />
   </head>
-  <body style="margin:0;background:#f7f7fb;">
+  <body style="margin:0;background:#f7f7fb">
     <div id="root"></div>
-
-    <!-- IMPORTANT: this must point to the static mount that serves the bundled file -->
+    <!-- Important: served by Express from /static -->
     <script type="module" src="/static/app.js"></script>
   </body>
 </html>

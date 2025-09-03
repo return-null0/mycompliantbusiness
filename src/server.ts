@@ -2,52 +2,48 @@ import path from "node:path";
 import express from "express";
 import cookieParser from "cookie-parser";
 
-// If you already have API routes, import and mount them here:
-// import { api } from "./routes/api.js";
+// session middleware + API router
+import { ensureSession } from "./middleware/ensureSession.js";
+import { api } from "./routes/api.js";
 
 const app = express();
-
-// Make sure Express trusts proxy (Railway/NGINX/etc.)
 app.set("trust proxy", true);
 
-// Basic middleware
+// Core middleware
 app.use(cookieParser());
 app.use(express.json());
 
-// Serve the bundled frontend at /static
-// Maps: /static/app.js  -> project/frontend/dist/app.js
+// Static frontend (/static/app.js served from frontend/dist)
 const staticDir = path.join(process.cwd(), "frontend", "dist");
 app.use(
   "/static",
   express.static(staticDir, {
-    // Let the .js be served as JS (Express does this by extension, but we’re explicit)
     setHeaders(res, filePath) {
       if (filePath.endsWith(".js")) {
         res.type("application/javascript; charset=utf-8");
       }
     },
-    // Feel free to tweak caching. Index will be no-cache, but static JS can be long-lived.
     maxAge: "1y",
     etag: false
   })
 );
 
-// If you have API routes, mount them before the HTML:
-// app.use("/api", api);
+// API (session cookie required here)
+app.use("/api", ensureSession, api);
 
-// Serve index.html for the app shell
+// Root HTML (no-cache to avoid stale HTML)
 app.get("/", (_req, res) => {
   const indexPath = path.join(process.cwd(), "frontend", "index.html");
-  res.setHeader("Cache-Control", "no-store"); // avoid stale HTML
+  res.setHeader("Cache-Control", "no-store");
   res.sendFile(indexPath);
 });
 
-// Health check
+// Health
 app.get("/api/health", (_req, res) => {
   res.json({ ok: true, ts: new Date().toISOString() });
 });
 
-// 404 fallback (optional)
+// 404 fallback
 app.use((_req, res) => {
   res.status(404).send("Not found");
 });
