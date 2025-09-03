@@ -12,7 +12,8 @@
     "start": "node --enable-source-maps dist/server.js",
     "prisma:deploy": "npm run prisma:deploy:common && npm run prisma:deploy:sessions",
     "prisma:deploy:common": "prisma migrate deploy --schema schemas/common/schema.prisma",
-    "prisma:deploy:sessions": "prisma migrate deploy --schema schemas/sessions/schema.prisma"
+    "prisma:deploy:sessions": "prisma migrate deploy --schema schemas/sessions/schema.prisma",
+    "postinstall": "prisma generate --schema schemas/common/schema.prisma && prisma generate --schema schemas/sessions/schema.prisma"
   },
   "dependencies": {
     "@prisma/client": "^6.15.0",

@@ -1,7 +1,8 @@
 // schemas/common/schema.prisma
 generator client {
-  provider = "prisma-client-js"
-  output   = "../../generated/common"
+  provider      = "prisma-client-js"
+  output        = "../../generated/common"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
 datasource db {

@@ -215,6 +215,10 @@ const config = {
         "fromEnvVar": null,
         "value": "darwin-arm64",
         "native": true
+      },
+      {
+        "fromEnvVar": null,
+        "value": "debian-openssl-3.0.x"
       }
     ],
     "previewFeatures": [],
@@ -232,6 +236,7 @@ const config = {
     "db"
   ],
   "activeProvider": "postgresql",
+  "postinstall": false,
   "inlineDatasources": {
     "db": {
       "url": {
@@ -240,8 +245,8 @@ const config = {
       }
     }
   },
-  "inlineSchema": "// schemas/common/schema.prisma\ngenerator client {\n  provider = \"prisma-client-js\"\n  output   = \"../../generated/common\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"COMMON_DATABASE_URL\")\n}\n\n/**\n * --- Enums (kept minimal) ---\n */\nenum Scope {\n  FEDERAL\n  STATE\n  CITY\n}\n\nenum Category {\n  EMPLOYMENT\n  SAFETY\n  TAX\n  LICENSING\n  ACCESSIBILITY\n  ENVIRONMENT\n  PRIVACY\n  OTHER\n}\n\nenum Severity {\n  REQUIRED\n  RECOMMENDED\n}\n\nenum RuleStatus {\n  DRAFT\n  ACTIVE\n  DEPRECATED\n}\n\nenum QuestionKind {\n  NUMBER\n  BOOL\n  TEXT\n}\n\n/**\n * --------- Models with nullable location ---------\n */\n/**\n * NOTE: Uniqueness now includes (scope, location, code)\n * so you can reuse the same code across different states/cities.\n */\n\nmodel Question {\n  id       Int          @id @default(autoincrement())\n  scope    Scope\n  location String? // NULL for federal; \"NY\" for New York; \"NYC\" for New York City, etc.\n  code     String // stable key used by sessions DB\n  kind     QuestionKind\n  prompt   String\n\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n\n  @@unique([scope, location, code])\n  @@index([scope, location])\n}\n\nmodel Obligation {\n  id          Int      @id @default(autoincrement())\n  scope       Scope\n  location    String? // NULL for federal; 2-letter state or city slug for local\n  code        String // stable key used by sessions DB\n  title       String\n  category    Category\n  severity    Severity @default(REQUIRED)\n  citation    String?\n  description String?\n\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n\n  rules Rule[]\n\n  @@unique([scope, location, code])\n  @@index([scope, location])\n}\n\nmodel Rule {\n  id           Int        @id @default(autoincrement())\n  scope        Scope\n  location     String? // match obligation/question location for quick AND-filtering\n  obligationId Int\n  obligation   Obligation @relation(fields: [obligationId], references: [id], onDelete: Cascade)\n\n  status        RuleStatus @default(ACTIVE)\n  effectiveFrom DateTime\n  effectiveTo   DateTime?\n  predicate     Json\n\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n\n  @@index([scope, location, status, effectiveFrom])\n  @@index([obligationId])\n}\n",
-  "inlineSchemaHash": "7ddbfeb94d9397ba1eb00cde12ade675391f41542f45b31b4223b35289bb92af",
+  "inlineSchema": "// schemas/common/schema.prisma\ngenerator client {\n  provider      = \"prisma-client-js\"\n  output        = \"../../generated/common\"\n  binaryTargets = [\"native\", \"debian-openssl-3.0.x\"]\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"COMMON_DATABASE_URL\")\n}\n\n/**\n * --- Enums (kept minimal) ---\n */\nenum Scope {\n  FEDERAL\n  STATE\n  CITY\n}\n\nenum Category {\n  EMPLOYMENT\n  SAFETY\n  TAX\n  LICENSING\n  ACCESSIBILITY\n  ENVIRONMENT\n  PRIVACY\n  OTHER\n}\n\nenum Severity {\n  REQUIRED\n  RECOMMENDED\n}\n\nenum RuleStatus {\n  DRAFT\n  ACTIVE\n  DEPRECATED\n}\n\nenum QuestionKind {\n  NUMBER\n  BOOL\n  TEXT\n}\n\n/**\n * --------- Models with nullable location ---------\n */\n/**\n * NOTE: Uniqueness now includes (scope, location, code)\n * so you can reuse the same code across different states/cities.\n */\n\nmodel Question {\n  id       Int          @id @default(autoincrement())\n  scope    Scope\n  location String? // NULL for federal; \"NY\" for New York; \"NYC\" for New York City, etc.\n  code     String // stable key used by sessions DB\n  kind     QuestionKind\n  prompt   String\n\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n\n  @@unique([scope, location, code])\n  @@index([scope, location])\n}\n\nmodel Obligation {\n  id          Int      @id @default(autoincrement())\n  scope       Scope\n  location    String? // NULL for federal; 2-letter state or city slug for local\n  code        String // stable key used by sessions DB\n  title       String\n  category    Category\n  severity    Severity @default(REQUIRED)\n  citation    String?\n  description String?\n\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n\n  rules Rule[]\n\n  @@unique([scope, location, code])\n  @@index([scope, location])\n}\n\nmodel Rule {\n  id           Int        @id @default(autoincrement())\n  scope        Scope\n  location     String? // match obligation/question location for quick AND-filtering\n  obligationId Int\n  obligation   Obligation @relation(fields: [obligationId], references: [id], onDelete: Cascade)\n\n  status        RuleStatus @default(ACTIVE)\n  effectiveFrom DateTime\n  effectiveTo   DateTime?\n  predicate     Json\n\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n\n  @@index([scope, location, status, effectiveFrom])\n  @@index([obligationId])\n}\n",
+  "inlineSchemaHash": "080f15fd00bb350bfa7d2380dd0c5db206071fe8ffa1bd9b8cb5d9e01949925c",
   "copyEngine": true
 }
 config.dirname = '/'

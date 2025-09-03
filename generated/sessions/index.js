@@ -171,6 +171,10 @@ const config = {
         "fromEnvVar": null,
         "value": "darwin-arm64",
         "native": true
+      },
+      {
+        "fromEnvVar": null,
+        "value": "debian-openssl-3.0.x"
       }
     ],
     "previewFeatures": [],
@@ -188,6 +192,7 @@ const config = {
     "db"
   ],
   "activeProvider": "postgresql",
+  "postinstall": false,
   "inlineDatasources": {
     "db": {
       "url": {
@@ -196,8 +201,8 @@ const config = {
       }
     }
   },
-  "inlineSchema": "// schemas/sessions/schema.prisma\ngenerator client {\n  provider = \"prisma-client-js\"\n  output   = \"../../generated/sessions\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"SESSIONS_DATABASE_URL\")\n}\n\n/**\n * Mirror enums needed here (no cross-DB enum sharing)\n */\nenum Scope {\n  FEDERAL\n  STATE\n  CITY\n}\n\n/**\n * Sessions that own answers\n */\nmodel Session {\n  id        String   @id @default(cuid())\n  expiresAt DateTime\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n\n  answers Answer[]\n\n  @@index([expiresAt])\n}\n\n/**\n * A single answer to a specific question within a session.\n * NOTE: We can’t FK to common.Question across databases; we store identifiers:\n * - scope, questionId, questionCode (and optional topicId for convenience)\n */\nmodel Answer {\n  id Int @id @default(autoincrement())\n\n  sessionId String\n  session   Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)\n\n  scope        Scope // FEDERAL/STATE/CITY (mirrors common enum)\n  questionId   Int // id from common.Question\n  questionCode String // code from common.Question\n  topicId      Int? // optional: from common.Topic if helpful\n\n  // User-provided value (store as JSON + typed projections for filtering)\n  value       Json\n  valueNumber Float?\n  valueBool   Boolean?\n  valueText   String?\n\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n\n  // Prevent duplicates within a session for the same question\n  @@unique([sessionId, questionCode])\n  // Indexes for common lookups\n  @@index([sessionId])\n  @@index([scope, questionId])\n  @@index([valueNumber])\n  @@index([valueBool])\n  @@index([valueText])\n}\n",
-  "inlineSchemaHash": "f51f72e6864dbcc10f21f7f26b901ae731db425266b45508c0d9d0e495304045",
+  "inlineSchema": "// schemas/sessions/schema.prisma\ngenerator client {\n  provider      = \"prisma-client-js\"\n  output        = \"../../generated/sessions\"\n  binaryTargets = [\"native\", \"debian-openssl-3.0.x\"]\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"SESSIONS_DATABASE_URL\")\n}\n\n/**\n * Mirror enums needed here (no cross-DB enum sharing)\n */\nenum Scope {\n  FEDERAL\n  STATE\n  CITY\n}\n\n/**\n * Sessions that own answers\n */\nmodel Session {\n  id        String   @id @default(cuid())\n  expiresAt DateTime\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n\n  answers Answer[]\n\n  @@index([expiresAt])\n}\n\n/**\n * A single answer to a specific question within a session.\n * NOTE: We can’t FK to common.Question across databases; we store identifiers:\n * - scope, questionId, questionCode (and optional topicId for convenience)\n */\nmodel Answer {\n  id Int @id @default(autoincrement())\n\n  sessionId String\n  session   Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)\n\n  scope        Scope // FEDERAL/STATE/CITY (mirrors common enum)\n  questionId   Int // id from common.Question\n  questionCode String // code from common.Question\n  topicId      Int? // optional: from common.Topic if helpful\n\n  // User-provided value (store as JSON + typed projections for filtering)\n  value       Json\n  valueNumber Float?\n  valueBool   Boolean?\n  valueText   String?\n\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n\n  // Prevent duplicates within a session for the same question\n  @@unique([sessionId, questionCode])\n  // Indexes for common lookups\n  @@index([sessionId])\n  @@index([scope, questionId])\n  @@index([valueNumber])\n  @@index([valueBool])\n  @@index([valueText])\n}\n",
+  "inlineSchemaHash": "4de7dbcaea4345639334e23753a2cd199eb5844ac676a9931a67fe910a66e2a4",
   "copyEngine": true
 }
 
@@ -238,6 +243,10 @@ Object.assign(exports, Prisma)
 // file annotations for bundling tools to include these files
 path.join(__dirname, "libquery_engine-darwin-arm64.dylib.node");
 path.join(process.cwd(), "generated/sessions/libquery_engine-darwin-arm64.dylib.node")
+
+// file annotations for bundling tools to include these files
+path.join(__dirname, "libquery_engine-debian-openssl-3.0.x.so.node");
+path.join(process.cwd(), "generated/sessions/libquery_engine-debian-openssl-3.0.x.so.node")
 // file annotations for bundling tools to include these files
 path.join(__dirname, "schema.prisma");
 path.join(process.cwd(), "generated/sessions/schema.prisma")
