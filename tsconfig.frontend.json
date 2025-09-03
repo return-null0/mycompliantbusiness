@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",    // works well for simple browser builds
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "outDir": "frontend",
+    "types": []                       // <-- IMPORTANT: no @types/node here
+  },
+  "include": ["frontend/main.ts"],
+  "exclude": ["node_modules"]
+}

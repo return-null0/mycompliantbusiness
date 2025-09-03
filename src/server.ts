@@ -4,12 +4,19 @@ import express, { type Request, type Response, type NextFunction } from "express
 import path from "node:path";
 import cookieParser from "cookie-parser";
 import { ensureSession } from "./middleware/ensureSession.js";
+import ReactNode from "react";
+import { obligationMeta } from "./routes/obligationMeta.js";
 
 // ✅ Your combined router that already has /questions, /answers, /obligations
 import { api } from "./routes/api.js";
 
 const app = express();
 
+app.use("/static", express.static(path.join(process.cwd(), "frontend", "dist")));
+
+app.get("/", (_req, res) => {
+  res.sendFile(path.join(process.cwd(), "frontend", "index.html"));
+});
 app.use(express.json());
 app.use(cookieParser());
 app.use(ensureSession);
@@ -18,6 +25,7 @@ app.use(ensureSession);
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
 app.get("/api/session", (req, res) => res.json({ sessionId: req.sessionId ?? null }));
 
+app.use("/api/obligation-meta", obligationMeta);
 // ✅ Mount ALL API endpoints
 app.use("/api", api);
 

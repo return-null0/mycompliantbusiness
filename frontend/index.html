@@ -2,20 +2,24 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Compliance Engine — Session</title>
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Compliance Q&A – React Demo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
-      :root { color-scheme: light dark; }
-      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 2rem; }
-      #session { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: #666; }
+      :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+      body { margin: 0; padding: 24px; background:#f7f7fb; color:#111; }
+      .app { max-width: 960px; margin: 0 auto; display: grid; gap: 16px; }
+      .card { background:#fff; border-radius:12px; box-shadow:0 1px 4px rgba(0,0,0,.06); padding:16px; }
+      .row { display:flex; align-items:center; gap:12px; }
+      .between { justify-content: space-between; }
+      .badge { background:#eef2ff; color:#3949ab; padding:3px 8px; border-radius:999px; font-size:.8rem; }
+      button { border:0; background:#4f46e5; color:#fff; padding:8px 12px; border-radius:10px; cursor:pointer; }
+      button.secondary { background:#e7e7ee; color:#222; }
+      input[type="text"], input[type="number"] { padding:8px 10px; border:1px solid #ccc; border-radius:10px; min-width:220px; }
+      ul { margin: 0; padding-left: 18px; }
     </style>
   </head>
   <body>
-    <h1>Compliance Engine</h1>
-    <p>Session ID: <span id="session">…starting…</span></p>
-
-    <script type="module" src="./main.js"></script>
+    <div id="root"><!-- React mounts here --></div>
+    <script type="module" src="/static/app.js"></script>
   </body>
 </html>
-
-

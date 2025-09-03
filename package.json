@@ -8,23 +8,33 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node --enable-source-maps dist/server.js",
+
+    "build:fe": "npx esbuild frontend/main.tsx --bundle --outfile=frontend/dist/app.js --format=esm --jsx=automatic --sourcemap",
+    "watch:fe": "npx esbuild frontend/main.tsx --bundle --outfile=frontend/dist/app.js --format=esm --jsx=automatic --sourcemap --watch",
+
     "prisma:gen:common": "prisma generate --schema schemas/common/schema.prisma",
     "prisma:gen:sessions": "prisma generate --schema schemas/sessions/schema.prisma",
     "prisma:gen": "npm run prisma:gen:common && npm run prisma:gen:sessions",
     "prisma:migrate:common": "prisma migrate dev --schema schemas/common/schema.prisma",
-    "prisma:migrate:sessions": "prisma migrate dev --schema schemas/sessions/schema.prisma"
+    "prisma:migrate:sessions": "prisma migrate dev --schema schemas/sessions/schema.prisma",
+
+    "postinstall": "npm run prisma:gen"
   },
   "dependencies": {
     "@prisma/client": "^6.15.0",
     "cookie-parser": "^1.4.6",
     "express": "^4.19.2",
-    "tsc": "^2.0.4"
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.3",
     "@types/express": "^4.17.21",
+    "@types/react": "^18.3.5",
+    "@types/react-dom": "^18.3.0",
+    "esbuild": "^0.25.9",
     "prisma": "^6.15.0",
     "tsx": "^4.20.5",
-    "typescript": "^5.9.2"
+    "typescript": "^5.4.0"
   }
 }

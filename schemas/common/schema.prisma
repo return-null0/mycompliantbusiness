@@ -44,59 +44,60 @@ enum QuestionKind {
   TEXT
 }
 
+/* --------- Models with nullable location --------- */
+/* NOTE: Uniqueness now includes (scope, location, code)
+   so you can reuse the same code across different states/cities. */
 
-/* --- Minimal Question --- */
 model Question {
   id        Int           @id @default(autoincrement())
   scope     Scope
+  location  String?       // NULL for federal; "NY" for New York; "NYC" for New York City, etc.
   code      String        // stable key used by sessions DB
   kind      QuestionKind
   prompt    String
 
-
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([scope, code])
+  @@unique([scope, location, code])
+  @@index([scope, location])
 }
 
-/* --- Minimal Obligation --- */
 model Obligation {
-  id          Int      @id @default(autoincrement())
+  id          Int        @id @default(autoincrement())
   scope       Scope
-  code        String   // stable key used by sessions DB
+  location    String?    // NULL for federal; 2-letter state or city slug for local
+  code        String     // stable key used by sessions DB
   title       String
   category    Category
-  severity    Severity @default(REQUIRED)
-  citation    String?  // leave optional for simpler seeds
+  severity    Severity   @default(REQUIRED)
+  citation    String?
   description String?
-
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   rules Rule[]
 
-  @@unique([scope, code])
+  @@unique([scope, location, code])
+  @@index([scope, location])
 }
 
-/* --- Minimal Rule --- */
-/* Bind a predicate to an obligation (no topic linkage needed). */
 model Rule {
   id            Int        @id @default(autoincrement())
   scope         Scope
+  location      String?    // match obligation/question location for quick AND-filtering
   obligationId  Int
   obligation    Obligation @relation(fields: [obligationId], references: [id], onDelete: Cascade)
 
   status        RuleStatus @default(ACTIVE)
   effectiveFrom DateTime
   effectiveTo   DateTime?
-  predicate     Json       // tiny DSL evaluated in server
+  predicate     Json
 
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
 
-  @@index([scope, status, effectiveFrom])
+  @@index([scope, location, status, effectiveFrom])
   @@index([obligationId])
 }
