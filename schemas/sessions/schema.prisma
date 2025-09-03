@@ -6,7 +6,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("SESSIONS_DATABASE_URL")
+  url      = env("DATABASE_URL")
 }
 
 /* Mirror enums needed here (no cross-DB enum sharing) */

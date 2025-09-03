@@ -4,9 +4,9 @@ import { PrismaClient } from "../generated/common/index.js";
 const globalForPrisma = globalThis as unknown as { _commonPrisma?: PrismaClient };
 
 function buildUrl() {
-  const base = process.env.COMMON_DATABASE_URL || process.env.DATABASE_URL;
+  const base = process.env.DATABASE_URL;
   if (!base) {
-    throw new Error("Missing DATABASE_URL (or COMMON_DATABASE_URL) in environment");
+    throw new Error("Missing DATABASE_URL  in environment");
   }
   return `${base}${base.includes("?") ? "&" : "?"}schema=common`;
 }

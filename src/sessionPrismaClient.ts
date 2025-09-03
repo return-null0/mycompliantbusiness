@@ -5,9 +5,9 @@ const globalForPrisma = globalThis as unknown as { _sessionPrisma?: PrismaClient
 
 function buildUrl() {
   // Prefer an explicit var if set, else default to DATABASE_URL
-  const base = process.env.SESSIONS_DATABASE_URL || process.env.DATABASE_URL;
+  const base = process.env.DATABASE_URL;
   if (!base) {
-    throw new Error("Missing DATABASE_URL (or SESSIONS_DATABASE_URL) in environment");
+    throw new Error("Missing DATABASE_URL  in environment");
   }
   return `${base}${base.includes("?") ? "&" : "?"}schema=sessions`;
 }
