@@ -4,22 +4,18 @@
   "license": "MIT",
   "type": "module",
   "main": "dist/server.js",
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc -p tsconfig.json && npm run build:fe",
     "start": "node --enable-source-maps dist/server.js",
-    "build:fe": "esbuild frontend/main.tsx --bundle --outfile=frontend/dist/app.js --format=esm --jsx=automatic --sourcemap",
-    "watch:fe": "esbuild frontend/main.tsx --bundle --outfile=frontend/dist/app.js --format=esm --jsx=automatic --sourcemap --watch",
-    "prisma:gen:common": "prisma generate --schema schemas/common/schema.prisma",
-    "prisma:gen:sessions": "prisma generate --schema schemas/sessions/schema.prisma",
-    "prisma:gen": "npm run prisma:gen:common && npm run prisma:gen:sessions",
-    "prisma:deploy:common": "prisma migrate deploy --schema schemas/common/schema.prisma",
-    "prisma:deploy:sessions": "prisma migrate deploy --schema schemas/sessions/schema.prisma",
-    "prisma:deploy": "npm run prisma:deploy:common && npm run prisma:deploy:sessions",
-    "postinstall": "npm run prisma:gen"
+
+    "build:fe": "npx esbuild frontend/src/main.tsx --bundle --outfile=frontend/dist/app.js --format=esm --jsx=automatic --sourcemap",
+    "watch:fe": "npx esbuild frontend/src/main.tsx --bundle --outfile=frontend/dist/app.js --format=esm --jsx=automatic --sourcemap --watch"
   },
   "dependencies": {
-    "@prisma/client": "^6.15.0",
     "cookie-parser": "^1.4.6",
     "express": "^4.19.2",
     "react": "^18.3.1",
@@ -28,10 +24,10 @@
   "devDependencies": {
     "@types/cookie-parser": "^1.4.3",
     "@types/express": "^4.17.21",
+    "@types/node": "^20.11.30",
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",
     "esbuild": "^0.25.9",
-    "prisma": "^6.15.0",
     "tsx": "^4.20.5",
     "typescript": "^5.4.0"
   }
